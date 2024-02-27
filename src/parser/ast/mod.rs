@@ -38,3 +38,12 @@ impl From<(i32, i32)> for Span {
         }
     }
 }
+
+#[derive(Debug, PartialEq)]
+pub enum Type {
+    Time,
+    Number,
+    Bool,
+    User,
+    Unit,
+}

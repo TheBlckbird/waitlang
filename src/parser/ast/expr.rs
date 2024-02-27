@@ -1,16 +1,21 @@
 use thin_vec::ThinVec;
 
-use super::{block::Block, lit::Lit, Span};
+use super::{super::Type, block::Block, lit::Lit, Span};
 
 #[derive(Debug, PartialEq)]
 pub struct Expr {
     pub expr_kind: ExprKind,
     pub span: Span,
+    pub type_: Type,
 }
 
 impl Expr {
-    pub fn new(expr_kind: ExprKind, span: Span) -> Self {
-        Self { expr_kind, span }
+    pub fn new(expr_kind: ExprKind, span: Span, type_: Type) -> Self {
+        Self {
+            expr_kind,
+            span,
+            type_,
+        }
     }
 }
 

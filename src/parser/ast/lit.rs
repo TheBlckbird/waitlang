@@ -1,58 +1,68 @@
-use super::Span;
+use super::{Span, Type};
 
 #[derive(Debug, PartialEq)]
 pub struct Lit {
     pub lit_kind: LitKind,
     pub span: Span,
+    pub type_: Type,
 }
 
 impl Lit {
-    pub fn new(lit_kind: LitKind, span: Span) -> Self {
-        Self { lit_kind, span }
+    pub fn new(lit_kind: LitKind, span: Span, type_: Type) -> Self {
+        Self {
+            lit_kind,
+            span,
+            type_,
+        }
     }
 }
 
-impl From<(i32, Span)> for Lit {
-    fn from(value: (i32, Span)) -> Self {
+impl From<(i32, Span, Type)> for Lit {
+    fn from(value: (i32, Span, Type)) -> Self {
         Self {
             lit_kind: LitKind::Num(value.0 as f32),
             span: value.1,
+            type_: value.2,
         }
     }
 }
 
-impl From<(f32, Span)> for Lit {
-    fn from(value: (f32, Span)) -> Self {
+impl From<(f32, Span, Type)> for Lit {
+    fn from(value: (f32, Span, Type)) -> Self {
         Self {
             lit_kind: LitKind::Num(value.0),
             span: value.1,
+            type_: value.2,
         }
     }
 }
 
-impl From<(i32, TimeKind, Span)> for Lit {
-    fn from(value: (i32, TimeKind, Span)) -> Self {
+impl From<(i32, TimeKind, Span, Type)> for Lit {
+    fn from(value: (i32, TimeKind, Span, Type)) -> Self {
         Self {
             lit_kind: LitKind::Time(value.0 as f32, value.1),
             span: value.2,
+            type_: value.3,
         }
     }
 }
 
-impl From<(f32, TimeKind, Span)> for Lit {
-    fn from(value: (f32, TimeKind, Span)) -> Self {
+impl From<(f32, TimeKind, Span, Type)> for Lit {
+    fn from(value: (f32, TimeKind, Span, Type)) -> Self {
         Self {
             lit_kind: LitKind::Time(value.0, value.1),
             span: value.2,
+            type_: value.3,
         }
     }
 }
 
-impl From<(bool, Span)> for Lit {
-    fn from(value: (bool, Span)) -> Self {
+impl From<(bool, Span, Type)> for Lit {
+    fn from(value: (bool, Span, Type)) -> Self {
         Self {
             lit_kind: LitKind::Bool(value.0),
             span: value.1,
+            type_: value.2,
         }
     }
 }

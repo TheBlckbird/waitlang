@@ -1,5 +1,5 @@
 use super::expr::{Expr, Ident};
-use super::Span;
+use super::{Span, Type};
 
 #[derive(Debug, PartialEq)]
 pub struct Stmt {
@@ -43,13 +43,4 @@ pub enum StmtKind {
     ///     // code
     /// }
     Expr(Box<Expr>),
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Type {
-    Time,
-    Float,
-    Int,
-    Bool,
-    User,
 }
