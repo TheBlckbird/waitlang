@@ -40,7 +40,7 @@ pub fn parse(code: &str) -> Result<Ast, ()> {
                     ))]),
                 ),
                 Span::from((5, 5)),
-                Type,
+                Type::Unit,
             ))),
             Span::from((4, 4)),
         ),

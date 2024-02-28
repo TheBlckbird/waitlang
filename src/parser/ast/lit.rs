@@ -77,7 +77,7 @@ pub enum LitKind {
     Bool(bool),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TimeKind {
     /// Milliseconds
     Ms,
@@ -95,20 +95,44 @@ pub enum TimeKind {
     Year,
 }
 
+impl TimeKind {
+    pub fn as_ms(&self) -> f32 {
+        match self {
+            TimeKind::Ms => 1.,
+            TimeKind::Sec => 1000.,
+            TimeKind::Min => 3600.,
+            TimeKind::Hour => 3_600_000.,
+            TimeKind::Day => 86_400_000.,
+            TimeKind::Week => 604_800_000.,
+            TimeKind::Year => 31_536_000_000.,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_from_lit_works() {
-        let num_lit = Lit::new(LitKind::Num(3.), Span::from((1, 1)));
-        let time_lit = Lit::new(LitKind::Time(3., TimeKind::Sec), Span::from((1, 1)));
-        let bool_lit = Lit::new(LitKind::Bool(true), Span::from((1, 1)));
+        let num_lit = Lit::new(LitKind::Num(3.), Span::from((1, 1)), Type::Number);
+        let time_lit = Lit::new(
+            LitKind::Time(3., TimeKind::Sec),
+            Span::from((1, 1)),
+            Type::Time,
+        );
+        let bool_lit = Lit::new(LitKind::Bool(true), Span::from((1, 1)), Type::Bool);
 
-        assert_eq!(num_lit, Lit::from((3, Span::from((1, 1)))));
-        assert_eq!(num_lit, Lit::from((3., Span::from((1, 1)))));
-        assert_eq!(time_lit, Lit::from((3, TimeKind::Sec, Span::from((1, 1)))));
-        assert_eq!(time_lit, Lit::from((3., TimeKind::Sec, Span::from((1, 1)))));
-        assert_eq!(bool_lit, Lit::from((true, Span::from((1, 1)))));
+        assert_eq!(num_lit, Lit::from((3, Span::from((1, 1)), Type::Number)));
+        assert_eq!(num_lit, Lit::from((3., Span::from((1, 1)), Type::Number)));
+        assert_eq!(
+            time_lit,
+            Lit::from((3, TimeKind::Sec, Span::from((1, 1)), Type::Time))
+        );
+        assert_eq!(
+            time_lit,
+            Lit::from((3., TimeKind::Sec, Span::from((1, 1)), Type::Time))
+        );
+        assert_eq!(bool_lit, Lit::from((true, Span::from((1, 1)), Type::Bool)));
     }
 }
