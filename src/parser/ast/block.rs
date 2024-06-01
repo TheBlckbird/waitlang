@@ -2,9 +2,9 @@ use super::stmt::Stmt;
 use super::{Span, Type};
 use thin_vec::ThinVec;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Block {
-    pub stmts: ThinVec<Stmt>,
+    pub stmts: Box<[Stmt]>,
     pub span: Span,
     pub type_: Type,
 }
@@ -12,7 +12,7 @@ pub struct Block {
 impl Block {
     pub fn new(span: Span, type_: Type) -> Self {
         Self {
-            stmts: ThinVec::new(),
+            stmts: Box::new([]),
             span,
             type_,
         }

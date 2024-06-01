@@ -1,7 +1,8 @@
+use super::block::Block;
 use super::expr::{Expr, Ident};
 use super::{Span, Type};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Stmt {
     pub stmt_kind: StmtKind,
     pub span: Span,
@@ -13,16 +14,16 @@ impl Stmt {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum StmtKind {
     /// Variable binding or declaration
     ///
     /// ## Example
-    /// ```javascript
-    /// var myvar = 3;
+    /// ```c
+    /// num myvar = 3;
     /// ```
     VarBind {
-        type_: Option<Type>,
+        type_: Type,
         identifier: Ident,
         value: Box<Expr>,
     },
@@ -33,14 +34,51 @@ pub enum StmtKind {
     /// ```rust
     /// print(3);
     /// ```
-    Semi(Box<Expr>),
+    Expr(Box<Expr>),
 
-    /// Any expression not followed by a semicolon
+    // An if statement
+    //
+    // ## Example
+    // ```rust
+    // if (a > 3) {
+    //    // true block
+    // } else if (a < 3) {
+    //   // else if true block
+    // } else {
+    //  // false block
+    // }
+    If(Box<Expr>, Box<Block>, Option<Box<Expr>>),
+
+    /// A while loop
     ///
     /// ## Example
     /// ```rust
-    /// if (a == 3) {
-    ///     // code
+    /// while (a > 3) {
+    ///    // block
     /// }
-    Expr(Box<Expr>),
+    /// ```
+    While(Box<Expr>, Box<Block>),
+
+    /// A function definition
+    ///
+    /// ## Example
+    /// ```c
+    /// num add(num a, num b) {
+    ///    return a + b;
+    /// }
+    /// ```
+    FnDef {
+        ident: Ident,
+        args: Box<[(Ident, Type)]>,
+        body: Box<Block>,
+        return_type: Type,
+    },
+
+    /// A return statement
+    ///
+    /// ## Example
+    /// ```rust
+    /// return 3;
+    /// ```
+    Return(Box<Expr>),
 }

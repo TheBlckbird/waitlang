@@ -1,37 +1,32 @@
+use std::{borrow::{Borrow, BorrowMut}, ops::Deref, sync::Arc};
+
+use super::{
+    stack::{self, StackItem, Variable},
+    Interpreter,
+};
 use crate::parser::ast::{
-    expr::{BinOpKind, Expr, ExprKind},
+    expr::{BinOp, Expr, ExprKind, Ident, UnOp},
     lit::{Lit, LitKind},
     Type,
 };
 
-use super::Interpreter;
-
 impl Interpreter {
-    pub fn eval_expr(&mut self, expr: Box<Expr>) -> Result<Lit, ()> {
-        match expr.expr_kind {
-            ExprKind::BinOp(bin_op_kind, left, right) => {
+    pub fn eval_expr(&self, expr: &Expr) -> Result<Lit, ()> {
+        match &expr.expr_kind {
+            ExprKind::Binary(bin_op_kind, left, right) => {
                 let exit_condition = match bin_op_kind {
-                    BinOpKind::Add
-                    | BinOpKind::Sub
-                    | BinOpKind::Mul
-                    | BinOpKind::Div
-                    | BinOpKind::Mod => {
+                    BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div | BinOp::Mod => {
                         (left.type_ != right.type_
                             && !(left.type_ == Type::Number && right.type_ == Type::Time)
                             && !(left.type_ == Type::Time && right.type_ == Type::Number))
                             || (left.type_ == Type::Time && right.type_ == Type::Time)
                     }
 
-                    BinOpKind::And | BinOpKind::Or | BinOpKind::Xor => {
+                    BinOp::And | BinOp::Or | BinOp::Xor => {
                         left.type_ != Type::Bool || right.type_ != Type::Bool
                     }
 
-                    BinOpKind::Eq
-                    | BinOpKind::Ne
-                    | BinOpKind::Lt
-                    | BinOpKind::Le
-                    | BinOpKind::Gt
-                    | BinOpKind::Ge => {
+                    BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge => {
                         // No bool
                         (left.type_ != right.type_
                             && !(left.type_ == Type::Number && right.type_ == Type::Time)
@@ -48,47 +43,107 @@ impl Interpreter {
                 let right = self.eval_expr(right)?;
 
                 match bin_op_kind {
-                    BinOpKind::Add
-                    | BinOpKind::Sub
-                    | BinOpKind::Mul
-                    | BinOpKind::Div
-                    | BinOpKind::Mod
-                    | BinOpKind::Eq
-                    | BinOpKind::Ne
-                    | BinOpKind::Lt
-                    | BinOpKind::Le
-                    | BinOpKind::Gt
-                    | BinOpKind::Ge => Ok(Lit::new(
-                        self.bin_op_num(bin_op_kind, left.lit_kind, right.lit_kind)?,
+                    BinOp::Add
+                    | BinOp::Sub
+                    | BinOp::Mul
+                    | BinOp::Div
+                    | BinOp::Mod
+                    | BinOp::Eq
+                    | BinOp::Ne
+                    | BinOp::Lt
+                    | BinOp::Le
+                    | BinOp::Gt
+                    | BinOp::Ge => Ok(Lit::new(
+                        self.bin_op_num(bin_op_kind, &left.lit_kind, &right.lit_kind)?,
                         expr.span,
                         expr.type_,
                     )),
-                    BinOpKind::And | BinOpKind::Or | BinOpKind::Xor => Ok(Lit::new(
-                        self.bin_op_bool(bin_op_kind, left.lit_kind, right.lit_kind),
+                    BinOp::And | BinOp::Or | BinOp::Xor => Ok(Lit::new(
+                        self.bin_op_bool(bin_op_kind, &left.lit_kind, &right.lit_kind),
                         expr.span,
                         expr.type_,
                     )),
                 }
             }
-            ExprKind::UnOp(_, _) => todo!(),
-            ExprKind::FnCall(_, _) => todo!(),
+            ExprKind::Unary(un_op_kind, target_expr) => {
+                let target_lit = self.eval_expr(target_expr)?;
+
+                if (target_lit.type_ == Type::Bool && *un_op_kind != UnOp::Not)
+                    || ((target_lit.type_ == Type::Number || target_lit.type_ == Type::Time)
+                        && *un_op_kind != UnOp::Neg)
+                {
+                    return Err(());
+                }
+
+                let lit_kind = match target_lit.lit_kind {
+                    LitKind::Num(num) => LitKind::Num(match un_op_kind {
+                        UnOp::Neg => -num,
+                        _ => unreachable!(),
+                    }),
+                    LitKind::Time(time, time_kind) => LitKind::Time(
+                        match un_op_kind {
+                            UnOp::Neg => -time,
+                            _ => unreachable!(),
+                        },
+                        time_kind,
+                    ),
+                    LitKind::Bool(bool) => LitKind::Bool(match un_op_kind {
+                        UnOp::Not => !bool,
+                        _ => unreachable!(),
+                    }),
+                };
+
+                Ok(Lit::new(lit_kind, target_expr.span, target_expr.type_))
+            }
+            ExprKind::FnCall(ident, arguments) => {
+                let rc = (*self.stack).borrow();
+                let function = rc.get_function(ident).ok_or(())?;
+
+                (*self.stack).borrow_mut().push(StackItem::StackMarker);
+
+                for (arg_index, argument) in arguments.deref().iter().enumerate() {
+                    if argument.type_ != function.args[arg_index].1 {
+                        return Err(())
+                    }
+
+                    (*self.stack)
+                        .borrow_mut()
+                        .push(StackItem::Variable(Variable::new(
+                            function.args[arg_index].0,
+                            self.eval_expr(argument)?,
+                            function.args[arg_index].1,
+                        )));
+                }
+
+                let maybe_lit = self.eval_block(function.body.clone(), true)?;
+
+                (*self.stack).borrow_mut().pop_scope();
+
+                match maybe_lit {
+                    Some(lit) => Ok(lit),
+                    None => Err(()),
+                }
+            }
             ExprKind::MethodCall {
                 receiver,
                 ident,
                 args,
             } => todo!(),
             ExprKind::FieldAcc(_, _) => todo!(),
-            ExprKind::Lit(lit) => Ok(lit),
-            ExprKind::If(_, _, _) => todo!(),
-            ExprKind::Ident(_) => todo!(),
+            ExprKind::Lit(lit) => Ok(*lit),
+            ExprKind::Ident(ident) => match (*self.stack).borrow().get_variable(ident) {
+                Some(var) => Ok(var.value),
+                None => Err(()),
+            },
+            // ExprKind::Block(block) => self.eval_block(block),
         }
     }
 
     fn bin_op_num(
         &self,
-        bin_op_kind: BinOpKind,
-        left: LitKind,
-        right: LitKind,
+        bin_op_kind: &BinOp,
+        left: &LitKind,
+        right: &LitKind,
     ) -> Result<LitKind, ()> {
         let mut ret_time_kind = None;
 
@@ -97,7 +152,7 @@ impl Interpreter {
                 ret_time_kind = Some(time_kind);
                 time_kind.as_ms() * num
             }
-            LitKind::Num(num) => num,
+            LitKind::Num(num) => *num,
             _ => unreachable!(),
         };
 
@@ -106,21 +161,21 @@ impl Interpreter {
                 ret_time_kind = Some(time_kind);
                 time_kind.as_ms() * num
             }
-            LitKind::Num(num) => num,
+            LitKind::Num(num) => *num,
             _ => unreachable!(),
         };
 
         let num_result = match bin_op_kind {
-            BinOpKind::Add => Some(left + right),
-            BinOpKind::Sub => Some(left - right),
-            BinOpKind::Mul => Some(left * right),
-            BinOpKind::Div => {
+            BinOp::Add => Some(left + right),
+            BinOp::Sub => Some(left - right),
+            BinOp::Mul => Some(left * right),
+            BinOp::Div => {
                 if right == 0. {
                     return Err(());
                 }
                 Some(left / right)
             }
-            BinOpKind::Mod => {
+            BinOp::Mod => {
                 if right == 0. {
                     return Err(());
                 }
@@ -130,12 +185,12 @@ impl Interpreter {
         };
 
         let bool_result = match bin_op_kind {
-            BinOpKind::Eq => Some(left == right),
-            BinOpKind::Ne => Some(left != right),
-            BinOpKind::Lt => Some(left < right),
-            BinOpKind::Le => Some(left <= right),
-            BinOpKind::Gt => Some(left > right),
-            BinOpKind::Ge => Some(left >= right),
+            BinOp::Eq => Some(left == right),
+            BinOp::Ne => Some(left != right),
+            BinOp::Lt => Some(left < right),
+            BinOp::Le => Some(left <= right),
+            BinOp::Gt => Some(left > right),
+            BinOp::Ge => Some(left >= right),
             _ => None,
         };
 
@@ -146,7 +201,7 @@ impl Interpreter {
                     None => unreachable!(),
                 };
 
-                Ok(LitKind::Time(result, time_kind))
+                Ok(LitKind::Time(result, *time_kind))
             }
             None => {
                 if let Some(num_result) = num_result {
@@ -162,7 +217,7 @@ impl Interpreter {
         }
     }
 
-    fn bin_op_bool(&self, bin_op_kind: BinOpKind, left: LitKind, right: LitKind) -> LitKind {
+    fn bin_op_bool(&self, bin_op_kind: &BinOp, left: &LitKind, right: &LitKind) -> LitKind {
         let left = match left {
             LitKind::Bool(bool) => bool,
             _ => unreachable!(),
@@ -174,9 +229,9 @@ impl Interpreter {
         };
 
         let result = match bin_op_kind {
-            BinOpKind::And => left && right,
-            BinOpKind::Or => left || right,
-            BinOpKind::Xor => left ^ right,
+            BinOp::And => *left && *right,
+            BinOp::Or => *left || *right,
+            BinOp::Xor => left ^ right,
             _ => unreachable!(),
         };
 

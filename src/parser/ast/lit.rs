@@ -1,6 +1,6 @@
 use super::{Span, Type};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Lit {
     pub lit_kind: LitKind,
     pub span: Span,
@@ -13,6 +13,13 @@ impl Lit {
             lit_kind,
             span,
             type_,
+        }
+    }
+
+    pub fn is_true(&self) -> Option<bool> {
+        match self.lit_kind {
+            LitKind::Bool(b) => Some(b),
+            _ => None,
         }
     }
 }
@@ -67,7 +74,7 @@ impl From<(bool, Span, Type)> for Lit {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum LitKind {
     /// Number (Float or Int)
     Num(f32),

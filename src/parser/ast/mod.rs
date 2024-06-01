@@ -18,7 +18,7 @@ impl Ast {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Span {
     start: i32,
     end: i32,
@@ -39,7 +39,7 @@ impl From<(i32, i32)> for Span {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Type {
     Time,
     Number,

@@ -1,35 +1,26 @@
-use crate::parser::ast::{lit::Lit, stmt::StmtKind, Ast, Span};
+use self::stack::Stack;
+use crate::parser::ast::Ast;
+use std::{cell::RefCell, rc::Rc};
 
+mod block;
 mod expr;
-
-#[derive(Debug)]
-pub struct Variable {
-    ident: String,
-    value: Lit,
-}
+mod stack;
+mod stmt;
 
 pub struct Interpreter {
-    variables: Vec<Variable>,
+    pub stack: Rc<RefCell<Stack>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            variables: Vec::new(),
+            stack: Rc::new(RefCell::new(Stack::new())),
         }
     }
 
-    pub fn run(&mut self, ast: Ast) -> Result<(), ()> {
+    pub fn run(&self, ast: Ast) -> Result<(), ()> {
         for node in ast.program {
-            match node.stmt_kind {
-                StmtKind::VarBind {
-                    type_,
-                    identifier,
-                    value,
-                } => todo!(),
-                StmtKind::Semi(_) => todo!(),
-                StmtKind::Expr(_) => todo!(),
-            }
+            self.eval_stmt(node, false)?;
         }
 
         Ok(())

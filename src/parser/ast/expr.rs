@@ -1,8 +1,8 @@
 use thin_vec::ThinVec;
 
-use super::{super::Type, block::Block, lit::Lit, Span};
+use super::{Type, lit::Lit, Span};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Expr {
     pub expr_kind: ExprKind,
     pub span: Span,
@@ -19,7 +19,7 @@ impl Expr {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ExprKind {
     /// Binary Operation
     ///
@@ -27,7 +27,7 @@ pub enum ExprKind {
     /// ```rust
     /// 3 + 5
     /// ```
-    BinOp(BinOpKind, Box<Expr>, Box<Expr>),
+    Binary(BinOp, Box<Expr>, Box<Expr>),
 
     /// Unary Operation
     ///
@@ -35,7 +35,7 @@ pub enum ExprKind {
     /// ```rust
     /// -5
     /// ```
-    UnOp(UnOpKind, Box<Expr>),
+    Unary(UnOp, Box<Expr>),
 
     /// Funtion Call
     ///
@@ -43,7 +43,7 @@ pub enum ExprKind {
     /// ```rust
     /// print(4)
     /// ```
-    FnCall(Ident, Option<ThinVec<Box<Expr>>>),
+    FnCall(Ident, Box<[Expr]>),
 
     /// Method Call
     ///
@@ -74,20 +74,6 @@ pub enum ExprKind {
     /// ```
     Lit(Lit),
 
-    /// If
-    ///
-    /// ## Example
-    /// ```rust
-    /// if (a == 5) {
-    ///     // main block
-    /// } else if (a = 4) {
-    ///     // else if block
-    /// } else {
-    ///     // else block
-    /// }
-    /// ```
-    If(Box<Expr>, Box<Block>, Option<Box<Expr>>),
-
     /// Identifier
     ///
     /// ## Example
@@ -97,7 +83,7 @@ pub enum ExprKind {
     Ident(Ident),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Ident {
     pub name: &'static str,
     pub span: Span,
@@ -113,8 +99,8 @@ impl Ident {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum BinOpKind {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum BinOp {
     /// Addition
     Add,
     /// Subtraction
@@ -145,8 +131,8 @@ pub enum BinOpKind {
     Ge,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum UnOpKind {
+#[derive(Debug, PartialEq, Clone)]
+pub enum UnOp {
     /// Boolean not
     Not,
     /// Negation
