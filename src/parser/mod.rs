@@ -1,7 +1,7 @@
 use self::ast::Ast;
 
 pub mod ast;
-mod lexer;
+pub mod lexer;
 
 pub fn parse(code: &str) -> Result<Ast, ()> {
     let mut ast = Ast::new();

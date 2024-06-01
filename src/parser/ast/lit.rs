@@ -105,13 +105,13 @@ pub enum TimeKind {
 impl TimeKind {
     pub fn as_ms(&self) -> f32 {
         match self {
-            TimeKind::Ms => 1.,
-            TimeKind::Sec => 1000.,
-            TimeKind::Min => 3600.,
-            TimeKind::Hour => 3_600_000.,
-            TimeKind::Day => 86_400_000.,
-            TimeKind::Week => 604_800_000.,
-            TimeKind::Year => 31_536_000_000.,
+            TimeKind::Ms => 1.0,
+            TimeKind::Sec => 1000.0,
+            TimeKind::Min => 3600.0,
+            TimeKind::Hour => 3_600_000.0,
+            TimeKind::Day => 86_400_000.0,
+            TimeKind::Week => 604_800_000.0,
+            TimeKind::Year => 31_536_000_000.0,
         }
     }
 }

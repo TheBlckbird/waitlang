@@ -3,11 +3,9 @@ name = "wait"
 version = "0.1.0"
 edition = "2021"
 
-# [workspace]
-# members = ["crates/*"]
+[lints.clippy]
+dbg_macro = "forbid"
 
 [dependencies]
-pest = "2.7"
-pest_derive = "2.7"
 rand = "0.8"
 thin-vec = "0.2"

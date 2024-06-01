@@ -39,6 +39,15 @@ impl From<(i32, i32)> for Span {
     }
 }
 
+impl From<i32> for Span {
+    fn from(value: i32) -> Self {
+        Self {
+            start: value,
+            end: value,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Type {
     Time,

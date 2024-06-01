@@ -1,25 +1,44 @@
+#![feature(let_chains)]
+
+use std::iter::once;
+
 use interpreter::Interpreter;
-use parser::parse;
+use parser::{lexer::lexer, parse};
 
 mod interpreter;
 mod parser;
 
 fn main() -> Result<(), ()> {
-    let ast = parse(
+    // let ast = parse(
+    //     "
+    //     user a = detect_user();
+
+    //     wait(30s);
+
+    //     if (a.bpm > 120) {
+    //         wait(15s);
+    //     }
+
+    //     wait(a.impatience * 120);",
+    // )?;
+
+    // let mut interpreter = Interpreter::new();
+    // interpreter.run(ast)?;
+
+    let tokens = lexer(
         "
-        user a = detect_user();
+user a = detect_user();
 
-        wait(30s);
+wait(30s);
 
-        if (a.bpm > 120) {
-            wait(15s);
-        }
+if (bpm > 120) {
+    wait(15s);
+}
 
-        wait(a.impatience * 120);",
-    )?;
+wait(a * 120);",
+    );
 
-    let mut interpreter = Interpreter::new();
-    interpreter.run(ast)?;
+    println!("{tokens:#?}");
 
     Ok(())
 }
