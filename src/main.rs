@@ -35,7 +35,9 @@ if (bpm > 120) {
     wait(15s);
 }
 
-wait(a * 120);",
+wait(a * 120);
+func wow(name: type) -> type {}
+",
     );
 
     println!("{tokens:#?}");

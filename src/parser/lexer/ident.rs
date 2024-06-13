@@ -22,6 +22,7 @@ pub fn parse_ident(remaining: &mut String, code_index: &mut i32) -> Token {
     let token_kind = match ident.as_str() {
         "true" => TokenKind::Bool(true),
         "false" => TokenKind::Bool(false),
+        "func" => TokenKind::Func,
         _ => TokenKind::Ident(ident),
     };
 

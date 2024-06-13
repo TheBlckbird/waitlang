@@ -68,6 +68,8 @@ pub enum TokenKind {
     Time(f32, TimeKind),
     /// Boolean x
     Bool(bool),
+    /// function keyword
+    Func,
     /// End of File x
     Eof,
 }
