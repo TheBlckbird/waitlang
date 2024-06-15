@@ -4,6 +4,7 @@ use crate::parser::ast::{lit::TimeKind, Span};
 pub fn parse_num(remaining: &mut String, code_index: &mut i32) -> Token {
     let start = *code_index;
     let mut num = String::new();
+    let mut last_char = ' ';
 
     while let Some(next_char) = remaining.chars().next() {
         match next_char {
@@ -11,9 +12,12 @@ pub fn parse_num(remaining: &mut String, code_index: &mut i32) -> Token {
             _ => break,
         }
 
-        remaining.remove(0);
+        last_char = remaining.remove(0);
         *code_index += 1;
     }
+
+    remaining.insert(0, last_char);
+    *code_index -= 1;
 
     let num = num.parse().unwrap();
 

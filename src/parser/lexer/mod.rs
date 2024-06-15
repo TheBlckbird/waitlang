@@ -1,5 +1,7 @@
 use self::{
-    ident::parse_ident, num::parse_num, token::{Token, TokenKind}
+    ident::parse_ident,
+    num::parse_num,
+    token::{Token, TokenKind},
 };
 use super::ast::Span;
 
@@ -23,7 +25,7 @@ pub fn lexer(code: &str) -> Result<Vec<Token>, ()> {
             '/' => tokens.push(make_simple_token(TokenKind::Div, code_index)),
             '%' => tokens.push(make_simple_token(TokenKind::Mod, code_index)),
             '-' => {
-                remaining.remove(0);
+                remaining.chars().next();
                 let is_minus = match remaining.chars().next() {
                     Some(next_char) => next_char != '>',
                     None => true,
@@ -36,8 +38,6 @@ pub fn lexer(code: &str) -> Result<Vec<Token>, ()> {
                         TokenKind::Arrow,
                         Span::new(code_index, code_index + 1),
                     ));
-                    code_index += 1;
-                    remaining.remove(0);
                 }
             }
             ':' => tokens.push(make_simple_token(TokenKind::Col, code_index)),
@@ -92,7 +92,7 @@ pub fn lexer(code: &str) -> Result<Vec<Token>, ()> {
                     code_index += 1;
                     remaining.remove(0);
                 } else {
-                    tokens.push(Token::new(TokenKind::Is, Span::from(code_index)))
+                    tokens.push(Token::new(TokenKind::Eq, Span::from(code_index)))
                 }
             }
             '^' => {

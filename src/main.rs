@@ -1,5 +1,5 @@
 #![feature(let_chains)]
-use parser::lexer::lexer;
+use parser::{lexer::lexer, parse};
 
 mod build_code;
 // mod interpreter;
@@ -37,7 +37,7 @@ fn main() -> Result<(), ()> {
     // ",
     //     )
     //     .unwrap();
-    let tokens = lexer("-3+5*7");
+    let tokens = parse("-3+5*7");
 
     println!("{tokens:#?}");
 
