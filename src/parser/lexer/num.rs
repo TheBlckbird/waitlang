@@ -1,9 +1,9 @@
-use crate::parser::ast::{lit::TimeKind, Span};
 use super::token::{Token, TokenKind};
+use crate::parser::ast::{lit::TimeKind, Span};
 
 pub fn parse_num(remaining: &mut String, code_index: &mut i32) -> Token {
     let start = *code_index;
-    let mut num = remaining.chars().next().unwrap().to_string();
+    let mut num = String::new();
 
     while let Some(next_char) = remaining.chars().next() {
         match next_char {

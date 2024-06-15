@@ -1,4 +1,8 @@
-use std::{borrow::{Borrow, BorrowMut}, ops::Deref, sync::Arc};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    ops::Deref,
+    sync::Arc,
+};
 
 use super::{
     stack::{self, StackItem, Variable},
@@ -26,7 +30,7 @@ impl Interpreter {
                         left.type_ != Type::Bool || right.type_ != Type::Bool
                     }
 
-                    BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge => {
+                    BinOp::EqEq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge => {
                         // No bool
                         (left.type_ != right.type_
                             && !(left.type_ == Type::Number && right.type_ == Type::Time)
@@ -48,7 +52,7 @@ impl Interpreter {
                     | BinOp::Mul
                     | BinOp::Div
                     | BinOp::Mod
-                    | BinOp::Eq
+                    | BinOp::EqEq
                     | BinOp::Ne
                     | BinOp::Lt
                     | BinOp::Le
@@ -58,11 +62,11 @@ impl Interpreter {
                         expr.span,
                         expr.type_,
                     )),
-                    BinOp::And | BinOp::Or | BinOp::Xor => Ok(Lit::new(
-                        self.bin_op_bool(bin_op_kind, &left.lit_kind, &right.lit_kind),
-                        expr.span,
-                        expr.type_,
-                    )),
+                    BinOp::And | BinOp::Or | BinOp::Xor => Ok(Lit::new(self.bin_op_bool(
+                        bin_op_kind,
+                        &left.lit_kind,
+                        &right.lit_kind,
+                    ))),
                 }
             }
             ExprKind::Unary(un_op_kind, target_expr) => {
@@ -103,7 +107,7 @@ impl Interpreter {
 
                 for (arg_index, argument) in arguments.deref().iter().enumerate() {
                     if argument.type_ != function.args[arg_index].1 {
-                        return Err(())
+                        return Err(());
                     }
 
                     (*self.stack)
@@ -185,7 +189,7 @@ impl Interpreter {
         };
 
         let bool_result = match bin_op_kind {
-            BinOp::Eq => Some(left == right),
+            BinOp::EqEq => Some(left == right),
             BinOp::Ne => Some(left != right),
             BinOp::Lt => Some(left < right),
             BinOp::Le => Some(left <= right),

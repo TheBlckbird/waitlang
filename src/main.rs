@@ -1,11 +1,8 @@
 #![feature(let_chains)]
+use parser::lexer::lexer;
 
-use std::iter::once;
-
-use interpreter::Interpreter;
-use parser::{lexer::lexer, parse};
-
-mod interpreter;
+mod build_code;
+// mod interpreter;
 mod parser;
 
 fn main() -> Result<(), ()> {
@@ -25,22 +22,26 @@ fn main() -> Result<(), ()> {
     // let mut interpreter = Interpreter::new();
     // interpreter.run(ast)?;
 
-    let tokens = lexer(
-        "
-user a = detect_user();
+    //     let tokens = parse(
+    //         "
+    // a: user = detect_user();
 
-wait(30s);
+    // wait(30s);
 
-if (bpm > 120) {
-    wait(15s);
-}
+    // if (bpm > 120) {
+    //     wait(15s);
+    // }
 
-wait(a * 120);
-func wow(name: type) -> type {}
-",
-    );
+    // wait(a * 120);
+    // func wow(name: type) -> type {}
+    // ",
+    //     )
+    //     .unwrap();
+    let tokens = lexer("-3+5*7");
 
     println!("{tokens:#?}");
+
+    // println!("{}", build_from_tokens(&tokens));
 
     Ok(())
 }

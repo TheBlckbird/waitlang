@@ -1,75 +1,78 @@
 use crate::parser::ast::{lit::TimeKind, Span};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Token {
-    pub token_kind: TokenKind,
+    pub kind: TokenKind,
     pub span: Span,
 }
 
 impl Token {
     pub fn new(token_kind: TokenKind, span: Span) -> Self {
-        Self { token_kind, span }
+        Self {
+            kind: token_kind,
+            span,
+        }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenKind {
-    /// Addition x
+    /// Addition
     Add,
-    /// Subtraction x
+    /// Subtraction
     Sub,
-    /// Multiplication x
+    /// Multiplication
     Mul,
-    /// Division x
+    /// Division
     Div,
-    /// Modulo x
+    /// Modulo
     Mod,
-    /// Boolean and x
+    /// Boolean and
     And,
-    /// Boolean or x
+    /// Boolean or
     Or,
-    /// Boolean xor x
+    /// Boolean or
     Xor,
-    /// Boolean equal x
-    Eq,
+    /// Boolean equal
+    EqEq,
     /// Boolean not equal
     Ne,
-    /// Boolean less than x
+    /// Boolean less than
     Lt,
-    /// Boolean less than or equal x
+    /// Boolean less than or equal
     Le,
-    /// Boolean greater than x
+    /// Boolean greater than
     Gt,
-    /// Boolean greater than or equal x
+    /// Boolean greater than or equal
     Ge,
-    /// Boolean not x
+    /// Boolean not
     Not,
-    /// Identifier x
+    /// Identifier
     Ident(String),
-    /// Opening Bracket x
+    /// Opening Bracket
     OpenBracket,
-    /// Closing Bracket x
+    /// Closing Bracket
     CloseBracket,
-    /// Opening curly Bracket x
+    /// Opening curly Bracket
     OpenCurlBracket,
-    /// Closing Curly Bracket x
+    /// Closing Curly Bracket
     CloseCurlBracket,
-    /// Colon x
+    /// Colon
     Col,
-    /// Semicolon x
+    /// Semicolon
     Semi,
-    /// Arrow x
+    /// Arrow
     Arrow,
-    /// Initialization equal x
-    Is,
-    /// Number x
+    /// Initialization equal
+    Eq,
+    /// Number
     Num(f32),
-    /// Time in different units x
+    /// Time in different units
     Time(f32, TimeKind),
-    /// Boolean x
+    /// Boolean
     Bool(bool),
     /// function keyword
     Func,
-    /// End of File x
+    /// End of File
     Eof,
 }

@@ -1,6 +1,6 @@
 use thin_vec::ThinVec;
 
-use super::{Type, lit::Lit, Span};
+use super::{lit::Lit, Span, Type};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Expr {
@@ -27,7 +27,7 @@ pub enum ExprKind {
     /// ```rust
     /// 3 + 5
     /// ```
-    Binary(BinOp, Box<Expr>, Box<Expr>),
+    Binary(Box<Expr>, BinOp, Box<Expr>),
 
     /// Unary Operation
     ///
@@ -81,6 +81,14 @@ pub enum ExprKind {
     /// a
     /// ```
     Ident(Ident),
+
+    /// Grouping
+    ///
+    /// ## Example
+    /// ```rust
+    /// (a+b) * c
+    /// ```
+    Grouping(Box<Expr>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -118,7 +126,7 @@ pub enum BinOp {
     /// Boolean xor
     Xor,
     /// Boolean equal
-    Eq,
+    EqEq,
     /// Boolean not equal
     Ne,
     /// Boolean less than
