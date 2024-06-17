@@ -1,4 +1,4 @@
-use std::{any::Any, borrow::Borrow, process::exit};
+use std::process::exit;
 
 use ast::{
     expr::{BinOp, Expr, ExprKind, UnOp},
@@ -8,7 +8,7 @@ use ast::{
 };
 use lexer::{
     lexer,
-    token::{self, Token, TokenKind},
+    token::{Token, TokenKind},
 };
 
 use self::ast::Ast;
@@ -21,11 +21,7 @@ pub fn parse(code: &str) -> Result<Ast, ()> {
 
     println!("{tokens:#?}");
     let mut parser = Parser::new(tokens);
-    let mut ast = Ast::new();
-    ast.program.push(Stmt::new(
-        StmtKind::Expr(Box::new(parser.expression())),
-        Span::new(0, 0),
-    ));
+    let ast = parser.parse()?;
 
     Ok(ast)
 }
@@ -38,6 +34,16 @@ struct Parser {
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
         Self { tokens, current: 0 }
+    }
+
+    pub fn parse(&mut self) -> Result<Ast, ()> {
+        let mut ast = Ast::new();
+        ast.program.push(Stmt::new(
+            StmtKind::Expr(Box::new(self.expression())),
+            Span::new(0, 0),
+        ));
+
+        Ok(ast)
     }
 
     fn r#match(&mut self, token_kinds: Vec<TokenKind>) -> bool {
@@ -189,22 +195,6 @@ impl Parser {
             return Expr::new(
                 ExprKind::Unary(operator, Box::new(right)),
                 Span::new(0, 0),
-                Type::Unit,
-            );
-            // } else {
-            //     self.simple_unary()
-        }
-
-        self.primary()
-    }
-
-    fn simple_unary(&mut self) -> Expr {
-        if self.r#match(vec![TokenKind::Not, TokenKind::Sub]) {
-            let operator = self.token_to_un_op(self.previous());
-            let right = self.primary();
-            return Expr::new(
-                ExprKind::Unary(operator, Box::new(right)),
-                Span::new(1, 1),
                 Type::Unit,
             );
         }
