@@ -1,0 +1,28 @@
+program     -> stmt*
+
+stmt        -> ( expr | if | while | var_bind | fn_def | return ) ";"?
+if          -> "if" expr block
+while       -> "while" expr block
+var_bind    -> "var" ident "=" expr
+fn_def      -> "func" ident "(" ident ":" ident ")" "->" ident block
+return      -> "return" expr
+
+block       -> "{" stmt* "}"
+ident       -> ALPHA ( ALPHA | "_" )*
+
+expr        -> equal | fn_call | method_call | prop_acc | ident
+
+fn_call     -> ident "(" expr* ")"
+// method_call
+// prop_acc
+
+equal       -> comp ( ( "!=" | "==" ) comp )*
+comp        -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
+term        -> factor ( ( "+" | "-" ) factor )*
+factor      -> unary ( ( "/" | "*" | "%" ) unary )*
+unary       -> ( "!" | "-" ) unary | primary
+primary     -> NUMBER+
+             | NUMBER+ ( "ms" | "s" | "min" | "h" | "d" | "w" | "y" )
+             | "true"
+             | "false"
+             | "(" expr ")"
