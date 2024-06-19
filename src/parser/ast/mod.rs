@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use self::stmt::Stmt;
 
 pub mod block;
@@ -20,12 +22,12 @@ impl Ast {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Span {
-    start: i32,
-    end: i32,
+    pub start: usize,
+    pub end: usize,
 }
 
 impl Span {
-    pub fn new(start: i32, end: i32) -> Self {
+    pub fn new(start: usize, end: usize) -> Self {
         Self { start, end }
     }
 }
@@ -33,8 +35,8 @@ impl Span {
 impl From<(i32, i32)> for Span {
     fn from(value: (i32, i32)) -> Self {
         Self {
-            start: value.0,
-            end: value.1,
+            start: value.0 as usize,
+            end: value.1 as usize,
         }
     }
 }
@@ -42,8 +44,8 @@ impl From<(i32, i32)> for Span {
 impl From<i32> for Span {
     fn from(value: i32) -> Self {
         Self {
-            start: value,
-            end: value,
+            start: value as usize,
+            end: value as usize,
         }
     }
 }
@@ -51,8 +53,8 @@ impl From<i32> for Span {
 impl From<(usize, usize)> for Span {
     fn from(value: (usize, usize)) -> Self {
         Self {
-            start: value.0 as i32,
-            end: value.1 as i32,
+            start: value.0,
+            end: value.1,
         }
     }
 }
@@ -60,8 +62,8 @@ impl From<(usize, usize)> for Span {
 impl From<usize> for Span {
     fn from(value: usize) -> Self {
         Self {
-            start: value as i32,
-            end: value as i32,
+            start: value,
+            end: value,
         }
     }
 }

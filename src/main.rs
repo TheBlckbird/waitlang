@@ -1,11 +1,15 @@
 #![feature(let_chains)]
-use parser::{lexer::lexer, parse};
+use error_handling::error;
+use parser::parse;
 
 mod build_code;
+mod error_handling;
 // mod interpreter;
 mod parser;
 
-fn main() -> Result<(), ()> {
+static mut CODE: &str = "";
+
+fn main() {
     // let ast = parse(
     //     "
     //     user a = detect_user();
@@ -37,11 +41,13 @@ fn main() -> Result<(), ()> {
     // ",
     //     )
     //     .unwrap();
-    let tokens = parse("-3+5*7");
 
-    println!("{tokens:#?}");
+    let code = "-3+rrddd*7"; // (-3) + (3 * 7)
+    unsafe { CODE = code };
 
-    // println!("{}", build_from_tokens(&tokens));
-
-    Ok(())
+    let ast = match parse(code) {
+        Some(ast) => ast,
+        None => return,
+    };
+    println!("{ast:#?}");
 }

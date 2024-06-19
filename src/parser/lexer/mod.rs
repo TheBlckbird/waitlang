@@ -171,7 +171,7 @@ pub fn lexer(code: &str) -> Result<Vec<Token>, ()> {
                 }
             }
             '0'..='9' => tokens.push(parse_num(&mut remaining, &mut code_index)),
-            ' ' | '\n' => (),
+            ' ' | '\n' | '\r' => {}
             _ => return Err(()),
         }
         code_index += 1;
@@ -183,6 +183,6 @@ pub fn lexer(code: &str) -> Result<Vec<Token>, ()> {
     Ok(tokens)
 }
 
-fn make_simple_token(token_kind: TokenKind, code_index: i32) -> Token {
+fn make_simple_token(token_kind: TokenKind, code_index: usize) -> Token {
     Token::new(token_kind, Span::from(code_index))
 }

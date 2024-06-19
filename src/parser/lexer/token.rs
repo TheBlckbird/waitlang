@@ -1,4 +1,5 @@
 use crate::parser::ast::{lit::TimeKind, Span};
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq)]
 pub struct Token {
@@ -75,4 +76,56 @@ pub enum TokenKind {
     Func,
     /// End of File
     Eof,
+}
+
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let out = match self {
+            TokenKind::Ident(ident) => ident.clone(),
+            TokenKind::Num(num) => num.to_string(),
+            TokenKind::Time(num, time_kind) => format!(
+                "{num}{}",
+                match time_kind {
+                    TimeKind::Ms => "ms",
+                    TimeKind::Sec => "s",
+                    TimeKind::Min => "min",
+                    TimeKind::Hour => "h",
+                    TimeKind::Day => "d",
+                    TimeKind::Week => "w",
+                    TimeKind::Year => "y",
+                }
+            ),
+            TokenKind::Bool(bool) => bool.to_string(),
+            _ => String::from(match self {
+                TokenKind::Add => "+",
+                TokenKind::Sub => "-",
+                TokenKind::Mul => "*",
+                TokenKind::Div => "/",
+                TokenKind::Mod => "%",
+                TokenKind::And => "&&",
+                TokenKind::Or => "||",
+                TokenKind::Xor => "^^",
+                TokenKind::EqEq => "==",
+                TokenKind::Ne => "!=",
+                TokenKind::Lt => "<",
+                TokenKind::Le => "<=",
+                TokenKind::Gt => ">",
+                TokenKind::Ge => ">=",
+                TokenKind::Not => "!",
+                TokenKind::OpenBracket => "(",
+                TokenKind::CloseBracket => ")",
+                TokenKind::OpenCurlBracket => "{",
+                TokenKind::CloseCurlBracket => "}",
+                TokenKind::Col => ":",
+                TokenKind::Semi => ";",
+                TokenKind::Arrow => "->",
+                TokenKind::Eq => "=",
+                TokenKind::Func => "func",
+                TokenKind::Eof => "",
+                _ => unreachable!(),
+            }),
+        };
+
+        write!(f, "{out}")
+    }
 }

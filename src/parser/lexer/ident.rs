@@ -1,7 +1,7 @@
 use super::token::{Token, TokenKind};
 use crate::parser::ast::Span;
 
-pub fn parse_ident(remaining: &mut String, code_index: &mut i32) -> Token {
+pub fn parse_ident(remaining: &mut String, code_index: &mut usize) -> Token {
     let start = *code_index;
     let mut ident = String::new();
     let mut last_char = ' ';

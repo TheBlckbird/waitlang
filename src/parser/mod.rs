@@ -1,5 +1,4 @@
-use std::process::exit;
-
+use self::ast::Ast;
 use ast::{
     expr::{BinOp, Expr, ExprKind, UnOp},
     lit::{Lit, LitKind},
@@ -10,20 +9,17 @@ use lexer::{
     lexer,
     token::{Token, TokenKind},
 };
-
-use self::ast::Ast;
+use parse_error::ParseError;
 
 pub mod ast;
 pub mod lexer;
+mod parse_error;
 
-pub fn parse(code: &str) -> Result<Ast, ()> {
+pub fn parse(code: &str) -> Option<Ast> {
     let tokens = lexer(code).unwrap();
 
-    println!("{tokens:#?}");
     let mut parser = Parser::new(tokens);
-    let ast = parser.parse()?;
-
-    Ok(ast)
+    parser.parse().ok()
 }
 
 struct Parser {
@@ -36,10 +32,11 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Ast, ()> {
+    pub fn parse(&mut self) -> Result<Ast, ParseError> {
         let mut ast = Ast::new();
+
         ast.program.push(Stmt::new(
-            StmtKind::Expr(Box::new(self.expression())),
+            StmtKind::Expr(Box::new(self.expression()?)),
             Span::new(0, 0),
         ));
 
@@ -114,29 +111,29 @@ impl Parser {
         }
     }
 
-    pub fn expression(&mut self) -> Expr {
+    pub fn expression(&mut self) -> Result<Expr, ParseError> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Expr {
-        let mut expr = self.comparison();
+    fn equality(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.comparison()?;
 
         while self.r#match(vec![TokenKind::EqEq, TokenKind::Ne]) {
             let operator = self.token_to_bin_op(self.previous());
 
-            let right = self.comparison();
+            let right = self.comparison()?;
             expr = Expr::new(
                 ExprKind::Binary(Box::new(expr), operator, Box::new(right)),
                 Span::new(0, 0),
                 Type::Unit,
-            )
+            );
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn comparison(&mut self) -> Expr {
-        let mut expr = self.term();
+    fn comparison(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.term()?;
 
         while self.r#match(vec![
             TokenKind::Gt,
@@ -145,7 +142,7 @@ impl Parser {
             TokenKind::Lt,
         ]) {
             let operator = self.token_to_bin_op(self.previous());
-            let right = self.term();
+            let right = self.term()?;
             expr = Expr::new(
                 ExprKind::Binary(Box::new(expr), operator, Box::new(right)),
                 Span::new(0, 0),
@@ -153,96 +150,98 @@ impl Parser {
             )
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn term(&mut self) -> Expr {
-        let mut expr = self.factor();
+    fn term(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.factor()?;
 
         while self.r#match(vec![TokenKind::Sub, TokenKind::Add]) {
             let operator = self.token_to_bin_op(self.previous());
-            let right = self.factor();
+            let right = self.factor()?;
             expr = Expr::new(
                 ExprKind::Binary(Box::new(expr), operator, Box::new(right)),
-                Span::new(0, 0),
-                Type::Unit,
-            )
-        }
-
-        expr
-    }
-
-    fn factor(&mut self) -> Expr {
-        let mut expr = self.unary();
-
-        while self.r#match(vec![TokenKind::Mul, TokenKind::Div, TokenKind::Mod]) {
-            let operator = self.token_to_bin_op(self.previous());
-            let right = self.unary();
-            expr = Expr::new(
-                ExprKind::Binary(Box::new(expr), operator, Box::new(right)),
-                Span::new(0, 0),
-                Type::Unit,
-            )
-        }
-
-        expr
-    }
-
-    fn unary(&mut self) -> Expr {
-        if self.r#match(vec![TokenKind::Not, TokenKind::Sub]) {
-            let operator = self.token_to_un_op(self.previous());
-            let right = self.unary();
-            return Expr::new(
-                ExprKind::Unary(operator, Box::new(right)),
                 Span::new(0, 0),
                 Type::Unit,
             );
+        }
+
+        Ok(expr)
+    }
+
+    fn factor(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.unary()?;
+
+        while self.r#match(vec![TokenKind::Mul, TokenKind::Div, TokenKind::Mod]) {
+            let operator = self.token_to_bin_op(self.previous());
+            let right = self.unary()?;
+            expr = Expr::new(
+                ExprKind::Binary(Box::new(expr), operator, Box::new(right)),
+                Span::new(0, 0),
+                Type::Unit,
+            );
+        }
+
+        Ok(expr)
+    }
+
+    fn unary(&mut self) -> Result<Expr, ParseError> {
+        if self.r#match(vec![TokenKind::Not, TokenKind::Sub]) {
+            let operator = self.token_to_un_op(self.previous());
+            let right = self.unary()?;
+            return Ok(Expr::new(
+                ExprKind::Unary(operator, Box::new(right)),
+                Span::new(0, 0),
+                Type::Unit,
+            ));
         }
 
         self.primary()
     }
 
-    fn primary(&mut self) -> Expr {
-        match self.peek().kind {
-            TokenKind::Bool(v) => {
-                self.advance();
-                return Expr::new(
-                    ExprKind::Lit(Lit::new(LitKind::Bool(v))),
-                    Span::new(0, 0),
-                    Type::Unit,
-                );
-            }
-            TokenKind::Num(v) => {
-                self.advance();
-                return Expr::new(
-                    ExprKind::Lit(Lit::new(LitKind::Num(v))),
-                    Span::new(0, 0),
-                    Type::Unit,
-                );
-            }
-            _ => {}
+    fn primary(&mut self) -> Result<Expr, ParseError> {
+        let expr = match self.peek().kind {
+            TokenKind::Bool(v) => Some(Expr::new(
+                ExprKind::Lit(Lit::new(LitKind::Bool(v))),
+                Span::new(0, 0),
+                Type::Unit,
+            )),
+            TokenKind::Num(v) => Some(Expr::new(
+                ExprKind::Lit(Lit::new(LitKind::Num(v))),
+                Span::new(0, 0),
+                Type::Unit,
+            )),
+            _ => None,
+        };
+
+        if let Some(expr) = expr {
+            self.advance();
+            return Ok(expr);
         }
 
         if self.r#match(vec![TokenKind::OpenBracket]) {
-            let expr = self.expression();
-            self.consume(TokenKind::CloseBracket, "Expected a closing Bracket");
-            return Expr::new(
+            let expr = self.expression()?;
+            self.consume(TokenKind::CloseBracket, "Expected a closing Bracket")?;
+            return Ok(Expr::new(
                 ExprKind::Grouping(Box::new(expr)),
                 Span::new(0, 0),
                 Type::Unit,
-            );
+            ));
         }
 
-        println!("{:#?}", self.peek());
-        unreachable!()
+        return Err(self.error(self.peek(), "Expected expression"));
     }
 
-    fn consume(&mut self, token_kind: TokenKind, message: &str) -> &Token {
+    fn consume(&mut self, token_kind: TokenKind, message: &str) -> Result<&Token, ParseError> {
         if self.check(token_kind) {
-            return self.advance();
+            return Ok(self.advance());
         };
 
-        eprintln!("{message}");
-        exit(1);
+        Err(self.error(self.peek(), message))
+    }
+
+    fn error(&self, token: &Token, message: &str) -> ParseError {
+        crate::error(token, message);
+        ParseError
     }
 }
