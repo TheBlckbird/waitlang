@@ -15,7 +15,7 @@ pub fn warn(token: &Token, message: &str) {
 }
 
 pub fn error(token: &Token, message: &str) {
-    fancy_report(token.span, message, ReportKind::Warning);
+    fancy_report(token.span, message, ReportKind::Error);
 }
 
 fn fancy_report(span: Span, message: &str, kind: ReportKind) {
