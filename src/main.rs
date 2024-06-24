@@ -1,10 +1,13 @@
 #![feature(let_chains)]
+use std::process::exit;
+
 use error_handling::error;
-use parser::parse;
+use interpreter::Interpreter;
+use parser::{ast::stmt::StmtKind, parse};
 
 mod build_code;
 mod error_handling;
-// mod interpreter;
+mod interpreter;
 mod parser;
 
 static mut CODE: &str = "";
@@ -42,7 +45,7 @@ fn main() {
     //     )
     //     .unwrap();
 
-    let code = "-3+rrddd*7"; // (-3) + (3 * 7)
+    let code = "(-3 + 3) * 7"; // (-3) + (3 * 7)
     unsafe { CODE = code };
 
     let ast = match parse(code) {
@@ -50,4 +53,16 @@ fn main() {
         None => return,
     };
     println!("{ast:#?}");
+
+    let expr = match ast.program.first().unwrap().stmt_kind.clone() {
+        StmtKind::Expr(expr) => expr.clone(),
+        _ => {
+            println!("Not an expression");
+            exit(1);
+        }
+    };
+
+    let interpreter = Interpreter::new();
+    let res = interpreter.eval_expr(&expr);
+    println!("{res:#?}");
 }

@@ -76,6 +76,8 @@ fn fancy_report(span: Span, message: &str, kind: ReportKind) {
 }
 
 /// Option<(line, char_in_line)>
+///
+/// You have to pass in span.end
 fn get_line_by_char(char: usize, code: &str) -> Option<(usize, usize)> {
     let lines = code.lines();
     let mut total_length = 0;

@@ -1,7 +1,7 @@
 use super::{Span, Type};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Lit(LitKind);
+pub struct Lit(pub LitKind);
 
 impl Lit {
     pub fn new(lit_kind: LitKind) -> Self {

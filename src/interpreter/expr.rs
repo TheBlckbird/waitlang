@@ -1,23 +1,18 @@
-use std::{
-    borrow::{Borrow, BorrowMut},
-    ops::Deref,
-    sync::Arc,
-};
-
 use super::{
-    stack::{self, StackItem, Variable},
+    stack::{StackItem, Variable},
     Interpreter,
 };
 use crate::parser::ast::{
-    expr::{BinOp, Expr, ExprKind, Ident, UnOp},
+    expr::{BinOp, Expr, ExprKind, UnOp},
     lit::{Lit, LitKind},
     Type,
 };
+use std::{ops::Deref, process::exit};
 
 impl Interpreter {
     pub fn eval_expr(&self, expr: &Expr) -> Result<Lit, ()> {
         match &expr.expr_kind {
-            ExprKind::Binary(bin_op_kind, left, right) => {
+            ExprKind::Binary(left, bin_op_kind, right) => {
                 let exit_condition = match bin_op_kind {
                     BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div | BinOp::Mod => {
                         (left.type_ != right.type_
@@ -57,29 +52,23 @@ impl Interpreter {
                     | BinOp::Lt
                     | BinOp::Le
                     | BinOp::Gt
-                    | BinOp::Ge => Ok(Lit::new(
-                        self.bin_op_num(bin_op_kind, &left.lit_kind, &right.lit_kind)?,
-                        expr.span,
-                        expr.type_,
-                    )),
-                    BinOp::And | BinOp::Or | BinOp::Xor => Ok(Lit::new(self.bin_op_bool(
-                        bin_op_kind,
-                        &left.lit_kind,
-                        &right.lit_kind,
-                    ))),
+                    | BinOp::Ge => Ok(Lit::new(self.bin_op_num(&left.0, bin_op_kind, &right.0)?)),
+                    BinOp::And | BinOp::Or | BinOp::Xor => {
+                        Ok(Lit::new(self.bin_op_bool(&left.0, bin_op_kind, &right.0)))
+                    }
                 }
             }
             ExprKind::Unary(un_op_kind, target_expr) => {
                 let target_lit = self.eval_expr(target_expr)?;
 
-                if (target_lit.type_ == Type::Bool && *un_op_kind != UnOp::Not)
-                    || ((target_lit.type_ == Type::Number || target_lit.type_ == Type::Time)
-                        && *un_op_kind != UnOp::Neg)
-                {
-                    return Err(());
-                }
+                // if (target_lit.type_ == Type::Bool && *un_op_kind != UnOp::Not)
+                //     || ((target_lit.type_ == Type::Number || target_lit.type_ == Type::Time)
+                //         && *un_op_kind != UnOp::Neg)
+                // {
+                //     return Err(());
+                // }
 
-                let lit_kind = match target_lit.lit_kind {
+                let lit_kind = match target_lit.0 {
                     LitKind::Num(num) => LitKind::Num(match un_op_kind {
                         UnOp::Neg => -num,
                         _ => unreachable!(),
@@ -97,7 +86,7 @@ impl Interpreter {
                     }),
                 };
 
-                Ok(Lit::new(lit_kind, target_expr.span, target_expr.type_))
+                Ok(Lit::new(lit_kind))
             }
             ExprKind::FnCall(ident, arguments) => {
                 let rc = (*self.stack).borrow();
@@ -139,14 +128,14 @@ impl Interpreter {
                 Some(var) => Ok(var.value),
                 None => Err(()),
             },
-            // ExprKind::Block(block) => self.eval_block(block),
+            ExprKind::Grouping(group) => self.eval_expr(group),
         }
     }
 
     fn bin_op_num(
         &self,
-        bin_op_kind: &BinOp,
         left: &LitKind,
+        bin_op_kind: &BinOp,
         right: &LitKind,
     ) -> Result<LitKind, ()> {
         let mut ret_time_kind = None;
@@ -221,7 +210,7 @@ impl Interpreter {
         }
     }
 
-    fn bin_op_bool(&self, bin_op_kind: &BinOp, left: &LitKind, right: &LitKind) -> LitKind {
+    fn bin_op_bool(&self, left: &LitKind, bin_op_kind: &BinOp, right: &LitKind) -> LitKind {
         let left = match left {
             LitKind::Bool(bool) => bool,
             _ => unreachable!(),
